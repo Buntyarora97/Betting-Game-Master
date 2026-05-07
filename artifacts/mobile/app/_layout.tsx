@@ -17,9 +17,15 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
-// Set API base URL for Expo (outside the web proxy)
-if (process.env.EXPO_PUBLIC_DOMAIN) {
+// Set API base URL — production uses Render, dev uses Replit proxy
+const PRODUCTION_API = "https://betting-game-master.onrender.com/api";
+
+if (process.env.EXPO_PUBLIC_API_URL) {
+  setBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+} else if (process.env.EXPO_PUBLIC_DOMAIN) {
   setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
+} else {
+  setBaseUrl(PRODUCTION_API);
 }
 
 SplashScreen.preventAutoHideAsync();
