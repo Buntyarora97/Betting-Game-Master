@@ -23,3 +23,9 @@ id = "tpNYvQbEIUj7gfUZGBQ4x"
 uri = "file://3batti-admin-panel-v2.tar.gz"
 type = "unspecified"
 title = "3 Batti Admin Panel v2 — Render API Fixed"
+
+[[outputs]]
+id = "Lix3zxpZK-AJadk47OFCT"
+uri = "file://3batti-admin-panel-FINAL.tar.gz"
+type = "unspecified"
+title = "3 Batti Admin Panel — FINAL (Render API Fixed)"

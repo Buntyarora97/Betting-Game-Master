@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "3batti",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
@@ -24,9 +24,7 @@
       },
       "package": "com.anuj.threebatti",
       "versionCode": 1,
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/images/icon.png",
@@ -50,11 +48,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "1204b99b-e529-40c1-b09c-8d8fb366b685"
-      }
     }
   }
 }
