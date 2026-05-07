@@ -11,3 +11,9 @@ id = "clLcWFY7zTSZWeKlz5Nfr"
 uri = "file://3batti-web-dist.tar.gz"
 type = "unspecified"
 title = "3 Batti Web App (Deploy-Ready)"
+
+[[outputs]]
+id = "ATgfiZuOZI5lL3Q1iNFB8"
+uri = "file://3batti-admin-panel.tar.gz"
+type = "unspecified"
+title = "3 Batti Admin Panel — Hostinger Ready"
