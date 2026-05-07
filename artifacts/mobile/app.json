@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "3batti",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
@@ -27,7 +27,8 @@
       "permissions": []
     },
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.png",
+      "output": "static"
     },
     "plugins": [
       [
@@ -37,14 +38,16 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow 3 Batti to access your photos for UPI QR upload."
+        }
+      ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    },
-    "extra": {
-      "apiUrl": "https://betting-game-master.onrender.com/api"
+      "typedRoutes": true
     }
   }
 }
