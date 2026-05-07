@@ -1,35 +1,8 @@
 import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
-import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme, Text } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="bets">
-        <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>Bets</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="wallet">
-        <Icon sf={{ default: "wallet.pass", selected: "wallet.pass.fill" }} />
-        <Label>Wallet</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
+import { Platform, StyleSheet, View, Text } from "react-native";
 
 function GoldTabIcon({ focused, icon, label }: { focused: boolean; icon: string; label: string }) {
   return (
@@ -47,8 +20,7 @@ function GoldTabIcon({ focused, icon, label }: { focused: boolean; icon: string;
   );
 }
 
-function ClassicTabLayout() {
-  const colorScheme = useColorScheme();
+export default function TabLayout() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
@@ -69,11 +41,7 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={80}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0A0C10" }]} />
           ),
@@ -82,66 +50,35 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ focused }) =>
-            isIOS ? (
-              <View style={{ alignItems: "center", paddingTop: 6 }}>
-                <SymbolView name={focused ? "house.fill" : "house"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
-                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Play</Text>
-              </View>
-            ) : (
-              <GoldTabIcon focused={focused} icon="home" label="Play" />
-            ),
+          tabBarIcon: ({ focused }) => (
+            <GoldTabIcon focused={focused} icon="home" label="Play" />
+          ),
         }}
       />
       <Tabs.Screen
         name="bets"
         options={{
-          tabBarIcon: ({ focused }) =>
-            isIOS ? (
-              <View style={{ alignItems: "center", paddingTop: 6 }}>
-                <SymbolView name={focused ? "chart.bar.fill" : "chart.bar"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
-                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Bets</Text>
-              </View>
-            ) : (
-              <GoldTabIcon focused={focused} icon="bar-chart-2" label="Bets" />
-            ),
+          tabBarIcon: ({ focused }) => (
+            <GoldTabIcon focused={focused} icon="bar-chart-2" label="Bets" />
+          ),
         }}
       />
       <Tabs.Screen
         name="wallet"
         options={{
-          tabBarIcon: ({ focused }) =>
-            isIOS ? (
-              <View style={{ alignItems: "center", paddingTop: 6 }}>
-                <SymbolView name={focused ? "creditcard.fill" : "creditcard"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
-                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Wallet</Text>
-              </View>
-            ) : (
-              <GoldTabIcon focused={focused} icon="credit-card" label="Wallet" />
-            ),
+          tabBarIcon: ({ focused }) => (
+            <GoldTabIcon focused={focused} icon="credit-card" label="Wallet" />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ focused }) =>
-            isIOS ? (
-              <View style={{ alignItems: "center", paddingTop: 6 }}>
-                <SymbolView name={focused ? "person.fill" : "person"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
-                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Profile</Text>
-              </View>
-            ) : (
-              <GoldTabIcon focused={focused} icon="user" label="Profile" />
-            ),
+          tabBarIcon: ({ focused }) => (
+            <GoldTabIcon focused={focused} icon="user" label="Profile" />
+          ),
         }}
       />
     </Tabs>
   );
-}
-
-export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
 }
