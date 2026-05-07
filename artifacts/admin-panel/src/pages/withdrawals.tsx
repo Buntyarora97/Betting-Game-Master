@@ -13,38 +13,41 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Withdrawals() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<string>("PENDING");
+  const [status, setStatus] = useState<string>("pending");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useGetAdminWithdrawals(
-    { page, limit: 20, status: status === "ALL" ? undefined : status },
-    { query: { queryKey: getGetAdminWithdrawalsQueryKey({ page, limit: 20, status: status === "ALL" ? undefined : status }) } }
-  );
+  const qParams = { page, limit: 20, status: status === "all" ? undefined : status };
+
+  const { data, isLoading } = useGetAdminWithdrawals(qParams, {
+    query: { queryKey: getGetAdminWithdrawalsQueryKey(qParams) },
+  });
 
   const approveMutation = useApproveWithdrawal();
 
-  const handleAction = (id: string, action: "APPROVED" | "REJECTED") => {
+  const handleAction = (txId: number, action: "approve" | "reject") => {
     approveMutation.mutate(
-      { id, data: { status: action } },
+      { txId, data: { action } },
       {
         onSuccess: () => {
           toast({
             title: "Success",
-            description: `Withdrawal ${action.toLowerCase()} successfully`,
+            description: `Withdrawal ${action}d successfully`,
           });
-          queryClient.invalidateQueries({ queryKey: getGetAdminWithdrawalsQueryKey({ page, limit: 20, status: status === "ALL" ? undefined : status }) });
+          queryClient.invalidateQueries({ queryKey: getGetAdminWithdrawalsQueryKey(qParams) });
         },
-        onError: (err) => {
+        onError: (err: any) => {
           toast({
             title: "Error",
-            description: err.message || "Failed to process withdrawal",
+            description: err?.data?.message || err.message || "Failed to process withdrawal",
             variant: "destructive",
           });
-        }
+        },
       }
     );
   };
+
+  const transactions = (data as any)?.transactions || [];
 
   return (
     <div className="space-y-6">
@@ -60,19 +63,20 @@ export default function Withdrawals() {
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="ALL">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="all">All</SelectItem>
             </SelectContent>
           </Select>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-             <div className="space-y-2">
-               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-             </div>
-          ) : !data || data.withdrawals?.length === 0 ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          ) : transactions.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground flex flex-col items-center">
               <Clock className="h-10 w-10 mb-3 text-muted-foreground/50" />
               <p>No withdrawal requests found.</p>
@@ -86,58 +90,49 @@ export default function Withdrawals() {
                       <TableHead>Date</TableHead>
                       <TableHead>User</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Bank / UPI Info</TableHead>
+                      <TableHead>Reference</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.withdrawals.map((tx) => (
+                    {transactions.map((tx: any) => (
                       <TableRow key={tx.id}>
                         <TableCell>
-                          {tx.createdAt ? format(new Date(tx.createdAt), "dd MMM yyyy HH:mm") : '-'}
+                          {tx.createdAt ? format(new Date(tx.createdAt), "dd MMM yyyy HH:mm") : "-"}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{tx.user?.phone || 'Unknown'}</div>
-                          <div className="text-xs text-muted-foreground">{tx.userId.substring(0,8)}</div>
+                          <div className="font-medium">{tx.userName || tx.userMobile || "Unknown"}</div>
+                          <div className="text-xs text-muted-foreground">#{tx.userId}</div>
                         </TableCell>
-                        <TableCell className="font-mono font-medium text-destructive">
-                          -₹{tx.amount.toLocaleString()}
+                        <TableCell className="font-mono font-medium text-red-500">
+                          -₹{Number(tx.amount).toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-sm">
-                           {tx.bankDetails ? (
-                             <div>
-                               <div>{tx.bankDetails.accountNumber}</div>
-                               <div className="text-xs text-muted-foreground">{tx.bankDetails.ifsc}</div>
-                             </div>
-                           ) : tx.upiDetails ? (
-                             <div className="font-mono">{tx.upiDetails.upiId}</div>
-                           ) : (
-                             <span className="text-muted-foreground">Not provided</span>
-                           )}
-                        </TableCell>
+                        <TableCell className="font-mono text-xs">{tx.referenceId || "-"}</TableCell>
                         <TableCell>
-                          {tx.status === "PENDING" && <Badge variant="outline" className="text-warning border-warning">Pending</Badge>}
-                          {tx.status === "APPROVED" && <Badge className="bg-success text-success-foreground">Approved</Badge>}
-                          {tx.status === "REJECTED" && <Badge variant="destructive">Rejected</Badge>}
+                          {tx.status === "pending" && <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pending</Badge>}
+                          {tx.status === "processing" && <Badge variant="outline" className="border-blue-500 text-blue-500">Processing</Badge>}
+                          {tx.status === "completed" && <Badge className="bg-green-700 text-white">Completed</Badge>}
+                          {tx.status === "approved" && <Badge className="bg-green-700 text-white">Approved</Badge>}
+                          {tx.status === "rejected" && <Badge variant="destructive">Rejected</Badge>}
                         </TableCell>
                         <TableCell className="text-right">
-                          {tx.status === "PENDING" ? (
+                          {(tx.status === "pending" || tx.status === "processing") ? (
                             <div className="flex justify-end gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 border-success text-success hover:bg-success hover:text-success-foreground"
-                                onClick={() => handleAction(tx.id, "APPROVED")}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                                onClick={() => handleAction(tx.id, "approve")}
                                 disabled={approveMutation.isPending}
                               >
                                 <Check className="h-4 w-4 mr-1" /> Approve
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 className="h-8 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                onClick={() => handleAction(tx.id, "REJECTED")}
+                                onClick={() => handleAction(tx.id, "reject")}
                                 disabled={approveMutation.isPending}
                               >
                                 <X className="h-4 w-4 mr-1" /> Reject
@@ -153,24 +148,12 @@ export default function Withdrawals() {
                 </Table>
               </div>
               <div className="flex items-center justify-between pt-4">
-                <div className="text-sm text-muted-foreground">
-                  Page {page}
-                </div>
+                <div className="text-sm text-muted-foreground">Page {page}</div>
                 <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
                     Previous
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={data.withdrawals.length < 20}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={transactions.length < 20}>
                     Next
                   </Button>
                 </div>

@@ -29,14 +29,19 @@ const queryClient = new QueryClient({
   },
 });
 
+import { useEffect } from "react";
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (!isAuthenticated) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
 
   return (
     <AppLayout>
@@ -49,9 +54,11 @@ function Router() {
   const { isAuthenticated } = useAuth();
   const [location, setLocation] = useLocation();
 
-  if (isAuthenticated && location === "/") {
-    setLocation("/dashboard");
-  }
+  useEffect(() => {
+    if (isAuthenticated && location === "/") {
+      setLocation("/dashboard");
+    }
+  }, [isAuthenticated, location]);
 
   return (
     <Switch>

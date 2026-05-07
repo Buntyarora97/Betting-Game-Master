@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   ArrowDownToLine, 
   ArrowUpFromLine,
-  Activity
+  Activity,
+  Settings
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

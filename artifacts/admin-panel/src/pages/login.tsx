@@ -31,8 +31,9 @@ export default function Login() {
   function onSubmit(values: z.infer<typeof loginSchema>) {
     adminLoginMutation.mutate({ data: values }, {
       onSuccess: (data) => {
-        if (data.token) {
-          login(data.token);
+        const token = (data as any).accessToken || (data as any).token;
+        if (token) {
+          login(token);
           toast({
             title: "Success",
             description: "Logged in successfully",

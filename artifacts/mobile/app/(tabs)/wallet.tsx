@@ -105,7 +105,7 @@ export default function WalletScreen() {
       return;
     }
     try {
-      await withdrawMutation.mutateAsync({ data: { amount: amt } });
+      await withdrawMutation.mutateAsync({ data: { amount: amt, method: "upi" } });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Withdrawal Requested", "Your withdrawal will be processed within 24 hours.");
       setWithdrawAmount("");
