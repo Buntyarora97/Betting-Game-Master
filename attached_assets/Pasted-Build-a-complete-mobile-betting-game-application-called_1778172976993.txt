@@ -1,0 +1,410 @@
+Build a complete mobile betting game application called "3 Batti" using React Native (Expo) for frontend, Node.js/Express backend deployed on Render, and Neon PostgreSQL database. The app should be compiled into an APK using Expo Go. Admin panel should be a separate React web app built and deployed on Hostinger (dist folder).
+
+---
+
+## APP NAME & BRANDING
+- App Name: "3 Batti" (Three Lights)
+- Theme: Traffic light concept - Red, Yellow, Green
+- Logo: Traffic signal with 3 circular lights (Red top, Yellow middle, Green bottom) on green background with yellow bottom strip
+- App Icon: Same traffic light logo with rounded corners
+- Primary Colors: Green (#2E7D32), Yellow (#FBC02D), Red (#D32F2F), Dark Blue/Navy for admin panel (#1A237E)
+
+---
+
+## GAME CONCEPT (3 BATTI)
+This is a color and number betting game. Users bet on which color (Red/Yellow/Green) or number (0-9) will appear in the next round. The game runs 4 times daily at fixed schedules:
+- Morning: 9:00 AM
+- Afternoon: 1:00 PM (Dopahar)
+- Evening: 5:00 PM
+- Night: 9:00 PM
+
+Each round has a countdown timer showing time remaining until next game.
+
+---
+
+## USER APP FEATURES (MOBILE APP - REACT NATIVE EXPO)
+
+### 1. AUTHENTICATION SYSTEM
+- Mobile number registration with OTP verification
+- Login with MPIN (4-digit) or Biometric (fingerprint/face ID)
+- "Remember me" option
+- Forgot MPIN reset via OTP
+- User Profile: Name, Mobile, Email (optional), Profile Picture
+- KYC Status: Pending/Verified (for withdrawals above certain amount)
+
+### 2. WALLET & PAYMENTS
+- Wallet Balance Display (prominently shown in header)
+- Add Money:
+  - Minimum deposit: ₹100
+  - UPI ID payment option (user enters UPI ID, gets QR code to scan)
+  - Reference/UTR ID mandatory input after payment
+  - Upload payment screenshot option
+  - Status: Pending → Admin Approval → Credited
+- Withdraw Money:
+  - Minimum withdrawal: ₹100
+  - Add bank details: Account Number, IFSC, Account Holder Name, Bank Name
+  - OR UPI ID withdrawal option
+  - Withdrawal request → Admin Approval → Processed
+- Transaction History:
+  - All deposits, withdrawals, bets, winnings, referral bonuses
+  - Filter by: All, Credit, Debit, Pending
+  - Date-wise sorting
+
+### 3. BETTING SYSTEM (CORE GAME)
+- **Home Screen:**
+  - Countdown timer to next game (9 AM, 1 PM, 5 PM, 9 PM)
+  - 3 large circular buttons: RED, YELLOW, GREEN (traffic light style)
+  - Number grid 0-9 below colors
+  - "Place Bet" button
+  
+- **Betting Rules:**
+  - Minimum bet: ₹10
+  - Color Betting: Choose Red, Yellow, or Green
+    - If chosen color wins: 2x return (₹10 bet = ₹20 total)
+    - If lose: ₹0 return
+  - Number Betting: Choose any number 0-9
+    - If chosen number wins: 9x return (₹10 bet = ₹90 total)
+    - If lose: ₹0 return
+  - User can place multiple bets in one round (different colors/numbers)
+  - Show potential winning amount before confirming bet
+  
+- **Bet Confirmation:**
+  - Selected color/number + amount display
+  - Confirm/Cancel option
+  - Deduct amount from wallet immediately upon confirmation
+  - Show "Bet Placed Successfully" animation
+
+### 4. RESULTS & HISTORY
+- Live Result Display:
+  - Current winning color (full screen animation - glowing effect)
+  - Current winning number (large display)
+  - "You Won ₹XXX" or "Better Luck Next Time" message
+  - Auto-credit winnings to wallet
+  
+- Result History Table:
+  - Date | Time | Winning Color | Winning Number | Your Bet | Result | Amount
+  - Last 50 results visible
+  - Filter by date range
+
+### 5. REFERRAL SYSTEM
+- Unique referral code for each user (auto-generated, customizable)
+- Share via WhatsApp, SMS, Copy Link
+- Referral Benefits:
+  - Referrer gets ₹50 when referee registers and adds ₹100+
+  - Referee gets ₹25 signup bonus
+  - Lifetime commission: Referrer gets 1% of every bet placed by referee (ongoing)
+  - Multi-level: If referee refers someone, original referrer gets 0.5%
+- Referral Dashboard:
+  - Total referrals
+  - Total referral earnings
+  - List of referred users with their betting activity
+  - Earnings breakdown: Signup bonus + Betting commission
+
+### 6. PROFILE & SETTINGS
+- Edit Profile (Name, Email, Profile Pic)
+- Change MPIN
+- Bank/UPI Details management
+- Notification Settings (game reminders, result announcements)
+- Dark Mode toggle
+- Language: Hindi/English toggle
+- Logout
+
+### 7. NOTIFICATIONS
+- Push notifications 15 minutes before each game
+- Result announcement notification
+- Wallet credit/debit notifications
+- Referral bonus credit notification
+- Admin announcements
+
+### 8. SUPPORT & LEGAL
+- Help & Support: WhatsApp chat button, FAQ
+- About Us
+- Terms & Conditions
+- Privacy Policy
+- Responsible Gaming Warning (18+ only)
+
+---
+
+## ADMIN PANEL FEATURES (REACT WEB APP - HOSTINGER)
+
+### 1. DASHBOARD
+- Total Registered Users (with daily/weekly/monthly growth chart)
+- Total Wallet Balance held by all users
+- Today's Collection (total bets placed today)
+- Today's Payout (total winnings paid today)
+- Profit/Loss calculation (Collection - Payout)
+- Live Active Users (currently online)
+- Upcoming Game countdown
+- Quick action buttons: Manage Game, UPI Settings, Withdrawal Requests
+
+### 2. USER MANAGEMENT
+- All Users List with search/filter
+- User Details:
+  - Personal info, KYC status, Wallet balance
+  - Total deposits, Total withdrawals, Total bets
+  - Referral chain (who referred them, whom they referred)
+  - Betting history
+  - Transaction history
+- Block/Unblock user
+- Edit user wallet balance (manual credit/debit with reason)
+- Send notification to specific user or all users
+
+### 3. GAME MANAGEMENT (CRITICAL)
+- **Schedule Management:**
+  - Default: 9 AM, 1 PM, 5 PM, 9 PM
+  - Ability to change timings or add extra games
+  - Emergency stop/pause game option
+  
+- **Result Declaration:**
+  - Two options:
+    1. Auto Result: System randomly picks color/number (configurable probability)
+    2. Manual Result: Admin selects winning color and number before timer ends
+  - Default: Manual mode (admin decides result)
+  - Admin can see total bets on each color and number BEFORE declaring result
+  - Show bet distribution:
+    - Red: ₹15,000 (45 users)
+    - Yellow: ₹8,000 (23 users)
+    - Green: ₹22,000 (67 users)
+    - Number 5: ₹3,000 (12 users)
+    - etc.
+  - Admin can choose result to minimize loss or as per strategy
+  - "Declare Result" button with confirmation
+  - Auto-distribute winnings after declaration
+  
+- **Result History:**
+  - All past results with timestamp
+  - Who declared (admin/system)
+  - Total collection vs payout for each round
+  - Edit/Delete result option (with audit log)
+
+### 4. BET ANALYTICS & REPORTS
+- Live Bet Monitoring (during active betting window):
+  - Real-time incoming bets
+  - Color-wise money distribution (pie chart)
+  - Number-wise money distribution (bar chart)
+  - Top betting users (who placed highest bets)
+  
+- Historical Reports:
+  - Daily/Weekly/Monthly betting volume
+  - Most popular color (which color users bet on most)
+  - Most popular number
+  - Peak betting hours
+  - User retention rate
+  - Average bet amount per user
+  
+- Financial Reports:
+  - Daily P&L statement
+  - Deposit vs Withdrawal summary
+  - Referral payout summary
+  - Tax/GST calculations (if applicable)
+
+### 5. PAYMENT MANAGEMENT
+- **Deposit Requests:**
+  - List all pending deposit requests
+  - View UTR ID, screenshot, amount, user details
+  - Approve/Reject with reason
+  - Bulk approve option
+  - Auto-approve option (if UTR matches with payment gateway)
+  
+- **Withdrawal Requests:**
+  - List all pending withdrawals
+  - View bank/UPI details, amount, user balance
+  - Approve/Reject with reason
+  - Mark as "Processing" → "Completed"
+  - Bulk process option
+  - Export to Excel
+  
+- **UPI/Bank Settings:**
+  - Add up to 30 UPI IDs (Google Pay, PhonePe, Paytm, etc.)
+  - Add up to 30 QR codes (scanner images)
+  - Rotation system: Show different UPI/QR to different users (round-robin)
+  - Activate/Deactivate specific UPI IDs
+  - Set UPI display limit (e.g., show UPI 1 to users 1-100, UPI 2 to 101-200)
+  - UPI transaction history per ID
+
+### 6. REFERRAL & COMMISSION MANAGEMENT
+- All referral codes list
+- Referral tree view (multi-level hierarchy)
+- Commission settings:
+  - Signup bonus amount (referrer/referee)
+  - Betting commission percentage
+  - Level 2 commission percentage
+- Manual commission credit/debit
+- Commission payout requests
+- Top referrers leaderboard
+
+### 7. CONTENT MANAGEMENT
+- Banner/Slider images for app home screen
+- Announcements/Marquee text
+- FAQ management
+- Terms & Privacy policy editor
+- Notification composer (send push to all/specific users)
+
+### 8. SETTINGS & CONFIGURATION
+- Game settings:
+  - Minimum bet amount
+  - Maximum bet amount per user per round
+  - Maximum bet amount per color/number
+  - Color return multiplier (default 2x)
+  - Number return multiplier (default 9x)
+  - Betting window duration (how many minutes before game locks)
+  
+- Payment settings:
+  - Minimum deposit/withdrawal
+  - Withdrawal timing (instant/24 hours)
+  - Daily withdrawal limit per user
+  
+- Security:
+  - Admin roles (Super Admin, Sub-admin with limited access)
+  - Login logs
+  - IP restriction
+  - Two-factor authentication for admin
+
+### 9. AUDIT LOGS
+- Every admin action logged:
+  - Result declaration
+  - User wallet edit
+  - Deposit/withdrawal approval
+  - Settings change
+- Filter by admin, date, action type
+- Export logs
+
+---
+
+## TECHNICAL REQUIREMENTS
+
+### FRONTEND (MOBILE APP)
+- React Native with Expo SDK
+- Expo Router for navigation
+- Redux Toolkit for state management
+- React Native Paper/NativeBase for UI components
+- Reanimated 2 for animations (betting glow, winning celebration)
+- React Native Chart Kit for user stats
+- Expo Notifications for push notifications
+- AsyncStorage for local data
+- Axios for API calls
+- expo-image-picker for screenshot upload
+
+### BACKEND (RENDER)
+- Node.js with Express.js
+- Neon PostgreSQL (serverless Postgres)
+- Prisma ORM for database management
+- JWT authentication (access + refresh tokens)
+- bcrypt for password hashing
+- Multer for file uploads (screenshots, QR codes)
+- node-cron for game scheduling automation
+- Socket.io for real-time bet updates in admin panel
+- express-rate-limit for API security
+- Helmet for security headers
+- CORS configured for specific domains
+
+### DATABASE SCHEMA (NEON POSTGRESQL)
+Tables needed:
+1. Users (id, name, mobile, email, mpin_hash, wallet_balance, referral_code, referred_by, kyc_status, created_at)
+2. Wallets (id, user_id, balance, total_deposited, total_withdrawn, total_won, total_lost)
+3. Transactions (id, user_id, type [deposit/withdrawal/bet/win/referral/bonus], amount, status, reference_id, screenshot_url, created_at)
+4. Games (id, scheduled_at, status [upcoming/live/closed], winning_color, winning_number, declared_by, total_collection, total_payout, created_at)
+5. Bets (id, user_id, game_id, bet_type [color/number], selection [red/yellow/green/0-9], amount, potential_win, status [pending/won/lost], created_at)
+6. UPI_Settings (id, upi_id, qr_image_url, is_active, user_range_start, user_range_end, display_order)
+7. Admin_Users (id, username, password_hash, role, permissions, last_login, created_at)
+8. Audit_Logs (id, admin_id, action, details, ip_address, created_at)
+9. Notifications (id, user_id, title, message, type, is_read, created_at)
+10. Referral_Earnings (id, referrer_id, referee_id, type [signup/bet], amount, status, created_at)
+
+### ADMIN PANEL (HOSTINGER)
+- React.js with Vite
+- React Router DOM
+- Material-UI (MUI) or Ant Design for admin dashboard
+- Recharts for analytics charts
+- React Table for data grids
+- Axios for API integration
+- JWT auth with role-based access
+- Responsive design (works on mobile browser too)
+
+### API ENDPOINTS REQUIRED
+Auth:
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/verify-otp
+- POST /api/auth/forgot-mpin
+- POST /api/auth/refresh-token
+
+User:
+- GET /api/user/profile
+- PUT /api/user/profile
+- GET /api/user/wallet
+- GET /api/user/transactions
+- GET /api/user/bets
+- GET /api/user/referrals
+
+Game:
+- GET /api/game/current (get upcoming game with timer)
+- GET /api/game/last-results
+- POST /api/game/place-bet
+- GET /api/game/bet-history
+
+Payment:
+- POST /api/payment/deposit-request
+- POST /api/payment/withdrawal-request
+- GET /api/payment/upi-details (get assigned UPI/QR)
+
+Admin:
+- GET /api/admin/dashboard-stats
+- GET /api/admin/users
+- GET /api/admin/user/:id
+- PUT /api/admin/user/:id/wallet
+- GET /api/admin/games
+- POST /api/admin/game/declare-result
+- GET /api/admin/bets/live
+- GET /api/admin/bets/analytics
+- GET /api/admin/deposits
+- PUT /api/admin/deposit/:id/approve
+- GET /api/admin/withdrawals
+- PUT /api/admin/withdrawal/:id/approve
+- GET /api/admin/upi-settings
+- POST /api/admin/upi-settings
+- GET /api/admin/referrals
+- GET /api/admin/audit-logs
+
+### SECURITY REQUIREMENTS
+- All API endpoints protected with JWT
+- Rate limiting: 100 requests per minute per IP
+- Input validation on all forms
+- SQL injection prevention via Prisma
+- XSS protection
+- File upload validation (only images, max 2MB)
+- Admin panel protected with 2FA option
+- Sensitive data encryption (bank details, UPI IDs)
+
+### DEPLOYMENT
+- Backend: Render.com (Node.js + Neon PostgreSQL)
+- Admin Panel: Hostinger (upload dist/build folder)
+- Mobile App: Expo Go for testing, then build APK using "eas build -p android"
+- Domain: Configure custom domain on Hostinger for admin panel
+- SSL certificate mandatory
+
+### ADDITIONAL FEATURES
+- Splash screen with animated 3 Batti logo
+- Sound effects for bet placement, winning, countdown
+- Haptic feedback on buttons
+- Pull-to-refresh on all lists
+- Skeleton loaders during API calls
+- Offline mode (view history, can't place bets)
+- In-app update notification
+- Maintenance mode (admin can enable/disable app access)
+
+---
+
+## IMPORTANT NOTES FOR DEVELOPER
+1. The game MUST have manual result declaration by admin as default (not random) so admin can control profitability
+2. Admin should see bet distribution BEFORE declaring result to make informed decision
+3. UPI rotation system is critical - different users should see different UPI IDs to distribute load
+4. All financial transactions must have proper audit trail
+5. Implement proper error handling and user-friendly error messages in Hindi/English
+6. App should work smoothly on low-end Android devices (2GB RAM)
+7. Optimize images and API calls for slow internet (2G/3G compatibility)
+8. Add "Responsible Gaming" warnings and self-exclusion option
+9. Implement daily betting limits to prevent addiction
+10. Keep 10% of total deposits as platform reserve (shown in admin dashboard)
+
+Build this complete system with clean code, proper folder structure, comments, and documentation. Make sure the UI is attractive, modern, and engaging so users enjoy playing. The traffic light theme should be prominent throughout the app with smooth animations.
