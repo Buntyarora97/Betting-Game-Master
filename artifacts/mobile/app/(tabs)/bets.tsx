@@ -7,21 +7,28 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useGetUserBets, getGetUserBetsQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { format } from "date-fns";
 
 const COLOR_HEX: Record<string, string> = {
-  red: "#D32F2F",
+  red: "#E53935",
   yellow: "#FBC02D",
-  green: "#2E7D32",
+  green: "#43A047",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  won: "#2E7D32",
-  lost: "#D32F2F",
-  pending: "#FBC02D",
+const COLOR_GRADIENT: Record<string, [string, string]> = {
+  red: ["#B71C1C", "#E53935"],
+  yellow: ["#F57F17", "#FBC02D"],
+  green: ["#1B5E20", "#43A047"],
+};
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  won: { color: "#43A047", bg: "#43A04720", label: "WON" },
+  lost: { color: "#E53935", bg: "#E5393520", label: "LOST" },
+  pending: { color: "#FBC02D", bg: "#FBC02D20", label: "PENDING" },
 };
 
 interface Bet {
@@ -54,99 +61,150 @@ export default function BetsScreen() {
     setRefreshing(false);
   };
 
-  const s = makeStyles(colors);
-
   if (!isAuthenticated) {
     return (
-      <View style={s.center}>
-        <Text style={s.emptyIcon}>🎮</Text>
-        <Text style={s.emptyTitle}>Login to view your bets</Text>
+      <View style={styles.center}>
+        <Text style={styles.emptyIcon}>🎮</Text>
+        <Text style={styles.emptyTitle}>Login to view your bets</Text>
       </View>
     );
   }
 
   const renderBet = ({ item: bet }: { item: Bet }) => {
     const isColor = bet.betType === "color";
-    const color = isColor ? COLOR_HEX[bet.selection] : undefined;
+    const statusCfg = STATUS_CONFIG[bet.status] || { color: "#8B8FA8", bg: "#1A1D28", label: bet.status.toUpperCase() };
 
     return (
-      <View style={s.betCard}>
-        <View style={s.betLeft}>
+      <View style={styles.betCard}>
+        <View style={styles.betLeft}>
           {isColor ? (
-            <View style={[s.colorDot, { backgroundColor: color }]} />
+            <LinearGradient
+              colors={COLOR_GRADIENT[bet.selection] || ["#333", "#555"]}
+              style={styles.colorDot}
+            >
+              <View style={styles.colorDotInner} />
+            </LinearGradient>
           ) : (
-            <View style={s.numberBox}>
-              <Text style={s.numberText}>{bet.selection}</Text>
-            </View>
+            <LinearGradient colors={["#D4AF37", "#A07820"]} style={styles.numberBox}>
+              <Text style={styles.numberText}>{bet.selection}</Text>
+            </LinearGradient>
           )}
-          <View style={s.betInfo}>
-            <Text style={s.betType}>{isColor ? bet.selection.charAt(0).toUpperCase() + bet.selection.slice(1) : `Number ${bet.selection}`}</Text>
-            <Text style={s.betDate}>{format(new Date(bet.createdAt), "dd MMM, HH:mm")}</Text>
+          <View style={styles.betInfo}>
+            <Text style={styles.betType}>
+              {isColor
+                ? bet.selection.charAt(0).toUpperCase() + bet.selection.slice(1)
+                : `Number ${bet.selection}`}
+            </Text>
+            <Text style={styles.betDate}>{format(new Date(bet.createdAt), "dd MMM · HH:mm")}</Text>
+            <Text style={styles.betGame}>Game #{bet.gameId}</Text>
           </View>
         </View>
-        <View style={s.betRight}>
-          <Text style={s.betAmount}>₹{Number(bet.amount).toFixed(0)}</Text>
-          <Text style={[s.betStatus, { color: STATUS_COLOR[bet.status] || colors.mutedForeground }]}>
-            {bet.status === "won" ? `+₹${Number(bet.potentialWin).toFixed(0)}` : bet.status.toUpperCase()}
-          </Text>
+        <View style={styles.betRight}>
+          <Text style={styles.betAmount}>₹{Number(bet.amount).toFixed(0)}</Text>
+          {bet.status === "won" && (
+            <Text style={styles.wonAmount}>+₹{Number(bet.potentialWin).toFixed(0)}</Text>
+          )}
+          <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}>
+            <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
+          </View>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={s.root}>
+    <View style={styles.root}>
       <FlatList
         data={bets}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderBet}
-        contentContainerStyle={s.list}
+        contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!!bets.length}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4AF37" />}
         ListEmptyComponent={
-          <View style={s.center}>
-            <Text style={s.emptyTitle}>No bets yet</Text>
-            <Text style={s.emptySubtitle}>Place your first bet on the Home tab</Text>
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyIcon}>🎯</Text>
+            <Text style={styles.emptyTitle}>No bets yet</Text>
+            <Text style={styles.emptySubtitle}>Place your first bet on the Home tab</Text>
           </View>
         }
         ListHeaderComponent={
-          <Text style={s.pageTitle}>My Bets</Text>
+          <View style={styles.pageHeader}>
+            <Text style={styles.pageTitle}>My Bets</Text>
+            <View style={styles.betCountBadge}>
+              <Text style={styles.betCount}>{bets.length} bets</Text>
+            </View>
+          </View>
         }
       />
     </View>
   );
 }
 
-function makeStyles(colors: any) {
-  return StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.background },
-    list: { paddingHorizontal: 16, paddingBottom: 120, paddingTop: Platform.OS === "web" ? 67 : 16 },
-    pageTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 16 },
-    betCard: {
-      backgroundColor: colors.card,
-      borderRadius: 12,
-      padding: 14,
-      marginBottom: 10,
-      flexDirection: "row" as const,
-      justifyContent: "space-between",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    betLeft: { flexDirection: "row" as const, alignItems: "center", gap: 12 },
-    colorDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: "rgba(255,255,255,0.2)" },
-    numberBox: { width: 32, height: 32, borderRadius: 8, backgroundColor: colors.primary, justifyContent: "center", alignItems: "center" },
-    numberText: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#fff" },
-    betInfo: { gap: 2 },
-    betType: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground },
-    betDate: { fontSize: 12, color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
-    betRight: { alignItems: "flex-end" as const },
-    betAmount: { fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground },
-    betStatus: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 2 },
-    center: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80 },
-    emptyIcon: { fontSize: 40, marginBottom: 12 },
-    emptyTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: colors.foreground },
-    emptySubtitle: { fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 4 },
-  });
-}
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#0A0C10" },
+  list: { paddingHorizontal: 16, paddingBottom: 120, paddingTop: Platform.OS === "web" ? 67 : 16 },
+  pageHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  pageTitle: { fontSize: 24, fontFamily: "Inter_700Bold", color: "#F0EAD6" },
+  betCountBadge: {
+    backgroundColor: "rgba(212,175,55,0.12)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.2)",
+  },
+  betCount: { fontSize: 12, color: "#D4AF37", fontFamily: "Inter_600SemiBold" },
+  betCard: {
+    backgroundColor: "#12151E",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#242840",
+  },
+  betLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  colorDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  colorDotInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.4)",
+  },
+  numberBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  numberText: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#0A0C10" },
+  betInfo: { gap: 2, flex: 1 },
+  betType: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#F0EAD6" },
+  betDate: { fontSize: 12, color: "#8B8FA8", fontFamily: "Inter_400Regular" },
+  betGame: { fontSize: 11, color: "#4A4E6A", fontFamily: "Inter_400Regular" },
+  betRight: { alignItems: "flex-end", gap: 4 },
+  betAmount: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#F0EAD6" },
+  wonAmount: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#43A047" },
+  statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  statusText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, backgroundColor: "#0A0C10" },
+  emptyCard: { paddingTop: 60, alignItems: "center" },
+  emptyIcon: { fontSize: 44, marginBottom: 12 },
+  emptyTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: "#F0EAD6" },
+  emptySubtitle: { fontSize: 13, color: "#8B8FA8", fontFamily: "Inter_400Regular", marginTop: 4 },
+});

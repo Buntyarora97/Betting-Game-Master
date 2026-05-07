@@ -5,9 +5,8 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
-
-import { useColors } from "@/hooks/useColors";
+import { Platform, StyleSheet, View, useColorScheme, Text } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 function NativeTabLayout() {
   return (
@@ -32,86 +31,107 @@ function NativeTabLayout() {
   );
 }
 
+function GoldTabIcon({ focused, icon, label }: { focused: boolean; icon: string; label: string }) {
+  return (
+    <View style={{ alignItems: "center", paddingTop: 6 }}>
+      <Feather name={icon as any} size={22} color={focused ? "#D4AF37" : "#8B8FA8"} />
+      <Text style={{
+        fontSize: 10,
+        marginTop: 3,
+        fontFamily: "Inter_500Medium",
+        color: focused ? "#D4AF37" : "#8B8FA8",
+      }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function ClassicTabLayout() {
-  const colors = useColors();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarActiveTintColor: "#D4AF37",
+        tabBarInactiveTintColor: "#8B8FA8",
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
+          backgroundColor: isIOS ? "transparent" : "#0A0C10",
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: "rgba(212,175,55,0.15)",
           elevation: 0,
-          height: isWeb ? 84 : 60,
+          height: isWeb ? 84 : 64,
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "dark"}
+              intensity={80}
+              tint="dark"
               style={StyleSheet.absoluteFill}
             />
           ) : (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0A0C10" }]} />
           ),
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Play",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ focused }) =>
             isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
+              <View style={{ alignItems: "center", paddingTop: 6 }}>
+                <SymbolView name={focused ? "house.fill" : "house"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
+                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Play</Text>
+              </View>
             ) : (
-              <Feather name="home" size={22} color={color} />
+              <GoldTabIcon focused={focused} icon="home" label="Play" />
             ),
         }}
       />
       <Tabs.Screen
         name="bets"
         options={{
-          title: "My Bets",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ focused }) =>
             isIOS ? (
-              <SymbolView name="chart.bar" tintColor={color} size={24} />
+              <View style={{ alignItems: "center", paddingTop: 6 }}>
+                <SymbolView name={focused ? "chart.bar.fill" : "chart.bar"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
+                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Bets</Text>
+              </View>
             ) : (
-              <Feather name="bar-chart-2" size={22} color={color} />
+              <GoldTabIcon focused={focused} icon="bar-chart-2" label="Bets" />
             ),
         }}
       />
       <Tabs.Screen
         name="wallet"
         options={{
-          title: "Wallet",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ focused }) =>
             isIOS ? (
-              <SymbolView name="creditcard" tintColor={color} size={24} />
+              <View style={{ alignItems: "center", paddingTop: 6 }}>
+                <SymbolView name={focused ? "creditcard.fill" : "creditcard"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
+                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Wallet</Text>
+              </View>
             ) : (
-              <Feather name="credit-card" size={22} color={color} />
+              <GoldTabIcon focused={focused} icon="credit-card" label="Wallet" />
             ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ focused }) =>
             isIOS ? (
-              <SymbolView name="person" tintColor={color} size={24} />
+              <View style={{ alignItems: "center", paddingTop: 6 }}>
+                <SymbolView name={focused ? "person.fill" : "person"} tintColor={focused ? "#D4AF37" : "#8B8FA8"} size={22} />
+                <Text style={{ fontSize: 10, marginTop: 3, fontFamily: "Inter_500Medium", color: focused ? "#D4AF37" : "#8B8FA8" }}>Profile</Text>
+              </View>
             ) : (
-              <Feather name="user" size={22} color={color} />
+              <GoldTabIcon focused={focused} icon="user" label="Profile" />
             ),
         }}
       />

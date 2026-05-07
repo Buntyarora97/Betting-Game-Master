@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,21 +6,32 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator,
+  Animated,
   RefreshControl,
+  Platform,
+  Dimensions,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useGetCurrentGame, usePlaceBet, useGetGameResults, useGetWallet } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
 
+const { width } = Dimensions.get("window");
+
 const COLORS = ["red", "yellow", "green"] as const;
 const NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 const COLOR_HEX: Record<string, string> = {
-  red: "#D32F2F",
+  red: "#E53935",
   yellow: "#FBC02D",
-  green: "#2E7D32",
+  green: "#43A047",
+};
+
+const COLOR_GRADIENT: Record<string, [string, string]> = {
+  red: ["#B71C1C", "#E53935"],
+  yellow: ["#F57F17", "#FBC02D"],
+  green: ["#1B5E20", "#43A047"],
 };
 
 const COLOR_LABEL: Record<string, string> = {
@@ -31,7 +42,7 @@ const COLOR_LABEL: Record<string, string> = {
 
 function Countdown({ seconds }: { seconds: number }) {
   const [timeLeft, setTimeLeft] = useState(seconds);
-  const colors = useColors();
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     setTimeLeft(seconds);
@@ -43,48 +54,50 @@ function Countdown({ seconds }: { seconds: number }) {
     return () => clearInterval(t);
   }, [timeLeft]);
 
+  useEffect(() => {
+    if (timeLeft < 30 && timeLeft > 0) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.04, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [timeLeft < 30]);
+
   const h = Math.floor(timeLeft / 3600);
   const m = Math.floor((timeLeft % 3600) / 60);
   const s = timeLeft % 60;
   const isUrgent = timeLeft < 300;
-
-  const s2 = StyleSheet.create({
-    container: { alignItems: "center", paddingVertical: 8 },
-    label: { fontSize: 12, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginBottom: 4, letterSpacing: 1.5, textTransform: "uppercase" as const },
-    timer: { flexDirection: "row" as const, alignItems: "center", gap: 2 },
-    block: {
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      minWidth: 52,
-      alignItems: "center",
-    },
-    num: { fontSize: 32, fontFamily: "Inter_700Bold", color: isUrgent ? "#D32F2F" : colors.foreground },
-    sep: { fontSize: 28, fontFamily: "Inter_700Bold", color: colors.mutedForeground, marginBottom: 4 },
-    unit: { fontSize: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 },
-  });
+  const isCritical = timeLeft < 30;
 
   return (
-    <View style={s2.container}>
-      <Text style={s2.label}>Next Game In</Text>
-      <View style={s2.timer}>
-        <View style={s2.block}>
-          <Text style={s2.num}>{String(h).padStart(2, "0")}</Text>
-          <Text style={s2.unit}>HRS</Text>
-        </View>
-        <Text style={s2.sep}>:</Text>
-        <View style={s2.block}>
-          <Text style={s2.num}>{String(m).padStart(2, "0")}</Text>
-          <Text style={s2.unit}>MIN</Text>
-        </View>
-        <Text style={s2.sep}>:</Text>
-        <View style={s2.block}>
-          <Text style={s2.num}>{String(s).padStart(2, "0")}</Text>
-          <Text style={s2.unit}>SEC</Text>
-        </View>
+    <Animated.View style={{ alignItems: "center", transform: [{ scale: pulseAnim }] }}>
+      <Text style={[styles.countdownLabel, isUrgent && { color: "#E53935" }]}>
+        {isCritical ? "⚡ BETTING CLOSES SOON" : "NEXT GAME IN"}
+      </Text>
+      <View style={styles.timerRow}>
+        {[
+          { val: h, unit: "HRS" },
+          { val: m, unit: "MIN" },
+          { val: s, unit: "SEC" },
+        ].map((item, i) => (
+          <React.Fragment key={item.unit}>
+            {i > 0 && (
+              <Text style={[styles.timerSep, isCritical && { color: "#E53935" }]}>:</Text>
+            )}
+            <View style={[styles.timerBlock, isCritical && styles.timerBlockUrgent]}>
+              <Text style={[styles.timerNum, isCritical && { color: "#E53935" }]}>
+                {String(item.val).padStart(2, "0")}
+              </Text>
+              <Text style={styles.timerUnit}>{item.unit}</Text>
+            </View>
+          </React.Fragment>
+        ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -97,6 +110,12 @@ export default function HomeScreen() {
   const [amount, setAmount] = useState<number>(100);
   const [refreshing, setRefreshing] = useState(false);
 
+  const headerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(headerAnim, { toValue: 1, duration: 700, useNativeDriver: true }).start();
+  }, []);
+
   const { data: gameData, refetch: refetchGame } = useGetCurrentGame({
     query: { refetchInterval: 10000 },
   });
@@ -106,7 +125,6 @@ export default function HomeScreen() {
   });
 
   const { data: resultsData } = useGetGameResults({ page: 1 });
-
   const placeBetMutation = usePlaceBet();
 
   const game = gameData as any;
@@ -120,22 +138,18 @@ export default function HomeScreen() {
       Alert.alert("Login Required", "Please login to place bets");
       return;
     }
-    if (!game?.currentGame && !game?.nextGameAt) {
-      Alert.alert("No Game", "No game available right now");
-      return;
-    }
-
     const gameId = game?.currentGame?.id;
     if (!gameId) {
       Alert.alert("Game Not Live", "Betting opens when the game goes live");
       return;
     }
-
     const balance = Number(wallet?.balance || 0);
     if (balance < amount) {
       Alert.alert("Insufficient Balance", `You need ₹${amount} but have ₹${balance.toFixed(2)}`);
       return;
     }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Alert.alert(
       "Confirm Bet",
@@ -143,19 +157,14 @@ export default function HomeScreen() {
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Confirm",
+          text: "Confirm & Bet",
           onPress: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             try {
               await placeBetMutation.mutateAsync({
-                data: {
-                  gameId,
-                  betType: type,
-                  selection: String(value),
-                  amount,
-                },
+                data: { gameId, betType: type, selection: String(value), amount },
               });
-              Alert.alert("Bet Placed!", `₹${amount} on ${type === "color" ? COLOR_LABEL[String(value)] : `Number ${value}`}`);
+              Alert.alert("✓ Bet Placed!", `₹${amount} on ${type === "color" ? COLOR_LABEL[String(value)] : `Number ${value}`}`);
               setSelectedColor(null);
               setSelectedNumber(null);
               refetchWallet();
@@ -174,148 +183,477 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const s = makeStyles(colors);
-
   return (
     <ScrollView
-      style={s.root}
-      contentContainerStyle={s.scroll}
+      style={{ flex: 1, backgroundColor: "#0A0C10" }}
+      contentContainerStyle={{ paddingBottom: 120 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4AF37" />}
     >
-      {/* Header */}
-      <View style={s.header}>
-        <Text style={s.greeting}>Hello, {user?.name?.split(" ")[0] || "Player"}</Text>
-        <View style={s.walletChip}>
-          <Text style={s.walletLabel}>Balance</Text>
-          <Text style={s.walletValue}>₹{Number(wallet?.balance || user?.walletBalance || 0).toFixed(2)}</Text>
-        </View>
-      </View>
-
-      {/* Game Timer Card */}
-      <View style={s.timerCard}>
-        <Countdown seconds={game?.secondsUntilNext || 0} />
-        <View style={s.schedule}>
-          {(game?.schedule || ["9:00", "13:00", "17:00", "21:00"]).map((t: string) => (
-            <View key={t} style={s.scheduleItem}>
-              <Text style={s.scheduleTime}>{t}</Text>
+      {/* Hero Banner */}
+      <LinearGradient
+        colors={["#12151E", "#1A1D28", "#0A0C10"]}
+        style={styles.heroBanner}
+      >
+        <Animated.View style={{ opacity: headerAnim }}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.helloText}>Hello,</Text>
+              <Text style={styles.nameText}>{user?.name?.split(" ")[0] || "Player"} 👋</Text>
             </View>
-          ))}
-        </View>
-      </View>
+            <LinearGradient
+              colors={["#D4AF37", "#A07820"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.walletChip}
+            >
+              <Text style={styles.walletLabel}>BALANCE</Text>
+              <Text style={styles.walletValue}>₹{Number(wallet?.balance || user?.walletBalance || 0).toFixed(2)}</Text>
+            </LinearGradient>
+          </View>
+        </Animated.View>
 
-      {/* Amount Selection */}
-      <Text style={s.sectionTitle}>Select Amount</Text>
-      <View style={s.amountRow}>
-        {AMOUNTS.map((a) => (
-          <TouchableOpacity
-            key={a}
-            style={[s.amountChip, amount === a && s.amountChipActive]}
-            onPress={() => { setAmount(a); Haptics.selectionAsync(); }}
+        {/* Timer Card */}
+        <View style={styles.timerCard}>
+          <LinearGradient
+            colors={["#1A1D28", "#12151E"]}
+            style={styles.timerGradient}
           >
-            <Text style={[s.amountText, amount === a && s.amountTextActive]}>₹{a}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Color Betting */}
-      <Text style={s.sectionTitle}>Bet on Color</Text>
-      <Text style={s.sectionSub}>Win 2x your bet</Text>
-      <View style={s.colorRow}>
-        {COLORS.map((c) => (
-          <TouchableOpacity
-            key={c}
-            style={[s.colorBtn, { backgroundColor: COLOR_HEX[c] }, selectedColor === c && s.colorBtnSelected]}
-            onPress={() => {
-              setSelectedColor(selectedColor === c ? null : c);
-              handleBet("color", c);
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={[s.colorCircle, { backgroundColor: COLOR_HEX[c] }]} />
-            <Text style={s.colorText}>{COLOR_LABEL[c]}</Text>
-            <Text style={s.colorMult}>2x</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Number Betting */}
-      <Text style={s.sectionTitle}>Bet on Number</Text>
-      <Text style={s.sectionSub}>Win 9x your bet</Text>
-      <View style={s.numberGrid}>
-        {NUMBERS.map((n) => (
-          <TouchableOpacity
-            key={n}
-            style={[s.numberBtn, selectedNumber === n && s.numberBtnSelected]}
-            onPress={() => {
-              setSelectedNumber(selectedNumber === n ? null : n);
-              handleBet("number", n);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={[s.numberText, selectedNumber === n && s.numberTextSelected]}>{n}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Recent Results */}
-      <Text style={s.sectionTitle}>Recent Results</Text>
-      {results.length === 0 ? (
-        <View style={s.emptyResults}>
-          <Text style={s.emptyText}>No results yet. First game today!</Text>
-        </View>
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.resultsScroll}>
-          {results.slice(0, 20).map((r: any) => (
-            <View key={r.id} style={s.resultBadge}>
-              <View style={[s.resultDot, { backgroundColor: COLOR_HEX[r.winningColor] || "#888" }]} />
-              <Text style={s.resultNum}>{r.winningNumber}</Text>
+            <Countdown seconds={game?.secondsUntilNext || 0} />
+            <View style={styles.scheduleRow}>
+              {(game?.schedule || ["9:00", "13:00", "17:00", "21:00"]).map((t: string) => (
+                <View key={t} style={styles.scheduleChip}>
+                  <Text style={styles.scheduleTime}>{t}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          </LinearGradient>
+        </View>
+      </LinearGradient>
+
+      <View style={styles.body}>
+        {/* Amount Selection */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionDot} />
+          <Text style={styles.sectionTitle}>Select Amount</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+          <View style={styles.amountRow}>
+            {AMOUNTS.map((a) => (
+              <TouchableOpacity
+                key={a}
+                onPress={() => { setAmount(a); Haptics.selectionAsync(); }}
+                activeOpacity={0.8}
+              >
+                {amount === a ? (
+                  <LinearGradient
+                    colors={["#D4AF37", "#A07820"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.amountChipActive}
+                  >
+                    <Text style={styles.amountTextActive}>₹{a}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.amountChip}>
+                    <Text style={styles.amountText}>₹{a}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
-      )}
+
+        {/* Color Betting */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionDot} />
+          <View>
+            <Text style={styles.sectionTitle}>Bet on Color</Text>
+            <Text style={styles.sectionSub}>Win 2× your bet amount</Text>
+          </View>
+        </View>
+        <View style={styles.colorRow}>
+          {COLORS.map((c) => (
+            <TouchableOpacity
+              key={c}
+              onPress={() => {
+                setSelectedColor(selectedColor === c ? null : c);
+                handleBet("color", c);
+              }}
+              activeOpacity={0.85}
+              style={{ flex: 1 }}
+            >
+              <LinearGradient
+                colors={COLOR_GRADIENT[c]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={[styles.colorBtn, selectedColor === c && styles.colorBtnSelected]}
+              >
+                <View style={[styles.colorCircle, { borderColor: `${COLOR_HEX[c]}88` }]}>
+                  <View style={[styles.colorCircleInner, { backgroundColor: COLOR_HEX[c] }]} />
+                </View>
+                <Text style={styles.colorLabel}>{COLOR_LABEL[c]}</Text>
+                <View style={styles.multBadge}>
+                  <Text style={styles.multText}>2×</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Number Betting */}
+        <View style={[styles.sectionHeader, { marginTop: 4 }]}>
+          <View style={styles.sectionDot} />
+          <View>
+            <Text style={styles.sectionTitle}>Bet on Number</Text>
+            <Text style={styles.sectionSub}>Win 9× your bet amount</Text>
+          </View>
+        </View>
+        <View style={styles.numberGrid}>
+          {NUMBERS.map((n) => (
+            <TouchableOpacity
+              key={n}
+              onPress={() => {
+                setSelectedNumber(selectedNumber === n ? null : n);
+                handleBet("number", n);
+              }}
+              activeOpacity={0.8}
+              style={styles.numberBtnWrapper}
+            >
+              {selectedNumber === n ? (
+                <LinearGradient
+                  colors={["#D4AF37", "#A07820"]}
+                  style={styles.numberBtnActive}
+                >
+                  <Text style={styles.numberTextActive}>{n}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.numberBtn}>
+                  <Text style={styles.numberText}>{n}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Recent Results */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionDot} />
+          <Text style={styles.sectionTitle}>Recent Results</Text>
+        </View>
+        {results.length === 0 ? (
+          <View style={styles.emptyResults}>
+            <Text style={styles.emptyText}>No results yet — be the first to play!</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+            <View style={styles.resultsRow}>
+              {results.slice(0, 20).map((r: any) => (
+                <View key={r.id} style={styles.resultBadge}>
+                  <View style={[styles.resultDot, { backgroundColor: COLOR_HEX[r.winningColor] || "#888" }]} />
+                  <Text style={styles.resultNum}>{r.winningNumber}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
-function makeStyles(colors: any) {
-  return StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.background },
-    scroll: { paddingHorizontal: 16, paddingBottom: 120, paddingTop: Platform.OS === "web" ? 67 : 16 },
-    header: { flexDirection: "row" as const, justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-    greeting: { fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground },
-    walletChip: { backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
-    walletLabel: { fontSize: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
-    walletValue: { fontSize: 15, fontFamily: "Inter_700Bold", color: colors.primary },
-    timerCard: { backgroundColor: colors.card, borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
-    schedule: { flexDirection: "row" as const, justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" as const },
-    scheduleItem: { backgroundColor: colors.secondary, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
-    scheduleTime: { fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
-    sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 4 },
-    sectionSub: { fontSize: 12, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginBottom: 12 },
-    amountRow: { flexDirection: "row" as const, gap: 8, marginBottom: 20, flexWrap: "wrap" as const },
-    amountChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-    amountChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    amountText: { fontSize: 14, color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
-    amountTextActive: { color: "#fff" },
-    colorRow: { flexDirection: "row" as const, gap: 10, marginBottom: 24 },
-    colorBtn: { flex: 1, borderRadius: 14, padding: 14, alignItems: "center", opacity: 0.9, borderWidth: 2, borderColor: "transparent" },
-    colorBtnSelected: { borderColor: "#fff", opacity: 1 },
-    colorCircle: { width: 28, height: 28, borderRadius: 14, marginBottom: 6, borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" },
-    colorText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" },
-    colorMult: { fontSize: 11, color: "rgba(255,255,255,0.8)", fontFamily: "Inter_400Regular", marginTop: 2 },
-    numberGrid: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 8, marginBottom: 24 },
-    numberBtn: { width: "18%" as any, aspectRatio: 1, borderRadius: 12, backgroundColor: colors.card, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
-    numberBtnSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-    numberText: { fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground },
-    numberTextSelected: { color: "#fff" },
-    emptyResults: { paddingVertical: 20, alignItems: "center" },
-    emptyText: { fontSize: 14, color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
-    resultsScroll: { marginBottom: 16 },
-    resultBadge: { backgroundColor: colors.card, borderRadius: 10, padding: 10, marginRight: 8, alignItems: "center", borderWidth: 1, borderColor: colors.border, minWidth: 52 },
-    resultDot: { width: 16, height: 16, borderRadius: 8, marginBottom: 4 },
-    resultNum: { fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground },
-  });
-}
-
-import { Platform } from "react-native";
+const styles = StyleSheet.create({
+  heroBanner: {
+    paddingTop: Platform.OS === "web" ? 80 : 52,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  helloText: {
+    fontSize: 14,
+    color: "#8B8FA8",
+    fontFamily: "Inter_400Regular",
+  },
+  nameText: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: "#F0EAD6",
+    marginTop: 2,
+  },
+  walletChip: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  walletLabel: {
+    fontSize: 9,
+    color: "rgba(10,12,16,0.7)",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1,
+  },
+  walletValue: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#0A0C10",
+  },
+  timerCard: {
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.15)",
+  },
+  timerGradient: {
+    padding: 18,
+    alignItems: "center",
+  },
+  countdownLabel: {
+    fontSize: 11,
+    color: "#8B8FA8",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 2,
+    marginBottom: 10,
+  },
+  timerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timerBlock: {
+    backgroundColor: "#242840",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minWidth: 60,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#303560",
+  },
+  timerBlockUrgent: {
+    borderColor: "#E53935",
+    backgroundColor: "#2A1018",
+  },
+  timerNum: {
+    fontSize: 34,
+    fontFamily: "Inter_700Bold",
+    color: "#F0EAD6",
+  },
+  timerUnit: {
+    fontSize: 9,
+    color: "#8B8FA8",
+    fontFamily: "Inter_500Medium",
+    marginTop: 2,
+    letterSpacing: 1,
+  },
+  timerSep: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: "#8B8FA8",
+    marginBottom: 8,
+  },
+  scheduleRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 14,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  scheduleChip: {
+    backgroundColor: "rgba(212,175,55,0.1)",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.2)",
+  },
+  scheduleTime: {
+    fontSize: 11,
+    color: "#D4AF37",
+    fontFamily: "Inter_500Medium",
+  },
+  body: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 12,
+  },
+  sectionDot: {
+    width: 3,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: "#D4AF37",
+    marginTop: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#F0EAD6",
+  },
+  sectionSub: {
+    fontSize: 12,
+    color: "#8B8FA8",
+    fontFamily: "Inter_400Regular",
+    marginTop: 1,
+  },
+  amountRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingRight: 16,
+  },
+  amountChip: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
+    backgroundColor: "#12151E",
+    borderWidth: 1,
+    borderColor: "#242840",
+  },
+  amountChipActive: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
+  },
+  amountText: {
+    fontSize: 14,
+    color: "#8B8FA8",
+    fontFamily: "Inter_600SemiBold",
+  },
+  amountTextActive: {
+    fontSize: 14,
+    color: "#0A0C10",
+    fontFamily: "Inter_700Bold",
+  },
+  colorRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 24,
+  },
+  colorBtn: {
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  colorBtnSelected: {
+    borderColor: "#D4AF37",
+  },
+  colorCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  colorCircleInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+  },
+  colorLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    marginBottom: 6,
+  },
+  multBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  multText: {
+    fontSize: 12,
+    color: "#fff",
+    fontFamily: "Inter_700Bold",
+  },
+  numberGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 24,
+  },
+  numberBtnWrapper: {
+    width: "17%",
+    aspectRatio: 1,
+  },
+  numberBtn: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: "#12151E",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#242840",
+  },
+  numberBtnActive: {
+    flex: 1,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  numberText: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: "#F0EAD6",
+  },
+  numberTextActive: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: "#0A0C10",
+  },
+  emptyResults: {
+    paddingVertical: 20,
+    alignItems: "center",
+    backgroundColor: "#12151E",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#242840",
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#8B8FA8",
+    fontFamily: "Inter_400Regular",
+  },
+  resultsRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingRight: 16,
+    paddingBottom: 8,
+  },
+  resultBadge: {
+    backgroundColor: "#12151E",
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#242840",
+    minWidth: 54,
+  },
+  resultDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    marginBottom: 4,
+    shadowColor: "#fff",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  resultNum: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#F0EAD6",
+  },
+});

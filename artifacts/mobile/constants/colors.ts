@@ -1,85 +1,99 @@
 const colors = {
   light: {
-    text: "#E8EAED",
-    tint: "#4A90D9",
+    text: "#F0EAD6",
+    tint: "#D4AF37",
 
-    background: "#0D1117",
-    foreground: "#E8EAED",
+    background: "#0A0C10",
+    foreground: "#F0EAD6",
 
-    card: "#161B22",
-    cardForeground: "#E8EAED",
+    card: "#12151E",
+    cardForeground: "#F0EAD6",
 
-    primary: "#4A90D9",
-    primaryForeground: "#FFFFFF",
+    primary: "#D4AF37",
+    primaryForeground: "#0A0C10",
 
-    secondary: "#1E2533",
+    secondary: "#1A1D28",
     secondaryForeground: "#C9D1D9",
 
-    muted: "#1E2533",
-    mutedForeground: "#8B949E",
+    muted: "#1A1D28",
+    mutedForeground: "#8B8FA8",
 
-    accent: "#1E2533",
-    accentForeground: "#E8EAED",
+    accent: "#D4AF37",
+    accentForeground: "#0A0C10",
 
-    destructive: "#D32F2F",
+    destructive: "#E53935",
     destructiveForeground: "#FFFFFF",
 
-    border: "#2A3050",
-    input: "#1E2533",
+    border: "#242840",
+    input: "#1A1D28",
 
-    // Game-specific colors
-    red: "#D32F2F",
+    red: "#E53935",
     yellow: "#FBC02D",
-    green: "#2E7D32",
+    green: "#43A047",
 
-    // Extended palette
-    surface: "#1A2035",
-    surfaceBorder: "#253050",
-    success: "#2E7D32",
+    gold: "#D4AF37",
+    goldLight: "#F0D060",
+    goldDark: "#A07820",
+
+    surface: "#161922",
+    surfaceBorder: "#2A2D40",
+    success: "#43A047",
     warning: "#FBC02D",
-    error: "#D32F2F",
+    error: "#E53935",
+
+    gradientStart: "#0A0C10",
+    gradientMid: "#12151E",
+    gradientAccent: "#1A1D28",
   },
 
   dark: {
-    text: "#E8EAED",
-    tint: "#4A90D9",
+    text: "#F0EAD6",
+    tint: "#D4AF37",
 
-    background: "#0D1117",
-    foreground: "#E8EAED",
+    background: "#0A0C10",
+    foreground: "#F0EAD6",
 
-    card: "#161B22",
-    cardForeground: "#E8EAED",
+    card: "#12151E",
+    cardForeground: "#F0EAD6",
 
-    primary: "#4A90D9",
-    primaryForeground: "#FFFFFF",
+    primary: "#D4AF37",
+    primaryForeground: "#0A0C10",
 
-    secondary: "#1E2533",
+    secondary: "#1A1D28",
     secondaryForeground: "#C9D1D9",
 
-    muted: "#1E2533",
-    mutedForeground: "#8B949E",
+    muted: "#1A1D28",
+    mutedForeground: "#8B8FA8",
 
-    accent: "#1E2533",
-    accentForeground: "#E8EAED",
+    accent: "#D4AF37",
+    accentForeground: "#0A0C10",
 
-    destructive: "#D32F2F",
+    destructive: "#E53935",
     destructiveForeground: "#FFFFFF",
 
-    border: "#2A3050",
-    input: "#1E2533",
+    border: "#242840",
+    input: "#1A1D28",
 
-    red: "#D32F2F",
+    red: "#E53935",
     yellow: "#FBC02D",
-    green: "#2E7D32",
+    green: "#43A047",
 
-    surface: "#1A2035",
-    surfaceBorder: "#253050",
-    success: "#2E7D32",
+    gold: "#D4AF37",
+    goldLight: "#F0D060",
+    goldDark: "#A07820",
+
+    surface: "#161922",
+    surfaceBorder: "#2A2D40",
+    success: "#43A047",
     warning: "#FBC02D",
-    error: "#D32F2F",
+    error: "#E53935",
+
+    gradientStart: "#0A0C10",
+    gradientMid: "#12151E",
+    gradientAccent: "#1A1D28",
   },
 
-  radius: 12,
+  radius: 14,
 };
 
 export default colors;
