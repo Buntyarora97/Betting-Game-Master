@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
@@ -25,10 +25,28 @@ app.use(
     },
   }),
 );
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// 404 handler
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ message: "Route not found", success: false });
+});
+
+// Global error handler — always returns JSON, never HTML
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ err }, "Unhandled error");
+  const status = err?.status || err?.statusCode || 500;
+  const message = err?.message || "Internal Server Error";
+  res.status(status).json({ message, success: false });
+});
 
 export default app;

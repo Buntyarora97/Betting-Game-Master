@@ -24,7 +24,9 @@
       },
       "package": "com.anuj.threebatti",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png",
@@ -48,6 +50,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1204b99b-e529-40c1-b09c-8d8fb366b685"
+      }
+    },
+    "owner": "anujdon"
   }
 }
