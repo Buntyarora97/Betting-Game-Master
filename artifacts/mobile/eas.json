@@ -11,7 +11,7 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://betting-game-master.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://betting-game-master.onrender.com"
       }
     },
     "production": {
@@ -19,7 +19,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://betting-game-master.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://betting-game-master.onrender.com"
       }
     }
   },

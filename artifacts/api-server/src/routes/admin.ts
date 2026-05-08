@@ -275,11 +275,11 @@ router.get("/admin/games", authenticateAdmin, async (req, res): Promise<void> =>
 
 // GET /admin/games/live-bets
 router.get("/admin/games/live-bets", authenticateAdmin, async (req, res): Promise<void> => {
-  // Get most recent upcoming/live game
+  // Get most recent live or upcoming game
   const [currentGame] = await db
     .select()
     .from(gamesTable)
-    .where(eq(gamesTable.status, "upcoming"))
+    .where(sql`${gamesTable.status} IN ('live', 'upcoming')`)
     .orderBy(desc(gamesTable.scheduledAt))
     .limit(1);
 
@@ -345,7 +345,7 @@ router.get("/admin/games/preset-result", authenticateAdmin, async (_req, res): P
   const [currentGame] = await db
     .select()
     .from(gamesTable)
-    .where(eq(gamesTable.status, "upcoming"))
+    .where(sql`${gamesTable.status} IN ('live', 'upcoming')`)
     .orderBy(desc(gamesTable.scheduledAt))
     .limit(1);
 
@@ -374,6 +374,30 @@ router.post("/admin/games/preset-result", authenticateAdmin, async (req, res): P
 
   await logAudit(adminId, "preset_result", `Preset: ${presetColor} #${presetNumber}`, undefined);
   res.json({ message: "Preset saved", success: true });
+});
+
+// POST /admin/games/open — create a new live game for the current/next slot
+router.post("/admin/games/open", authenticateAdmin, async (req, res): Promise<void> => {
+  const adminId = (req as any).admin.id;
+  try {
+    // Close any existing live/upcoming game first
+    await db.update(gamesTable)
+      .set({ status: "closed" })
+      .where(sql`${gamesTable.status} IN ('live', 'upcoming')`);
+
+    const scheduledAt = new Date();
+    const [game] = await db.insert(gamesTable).values({
+      scheduledAt,
+      status: "live",
+      totalCollection: "0",
+      totalPayout: "0",
+    }).returning();
+
+    await logAudit(adminId, "open_game", `Game #${game.id} opened at ${scheduledAt.toISOString()}`, req.ip);
+    res.status(201).json({ id: game.id, scheduledAt: game.scheduledAt, status: game.status });
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message || "Failed to open game", success: false });
+  }
 });
 
 // POST /admin/games/declare-result

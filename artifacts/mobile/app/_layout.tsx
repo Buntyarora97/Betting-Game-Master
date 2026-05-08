@@ -18,7 +18,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Set API base URL — production uses Render, dev uses Replit proxy
-const PRODUCTION_API = "https://betting-game-master.onrender.com/api";
+// NOTE: Do NOT include /api suffix — the generated client already adds it to every path
+const PRODUCTION_API = "https://betting-game-master.onrender.com";
 
 if (process.env.EXPO_PUBLIC_API_URL) {
   setBaseUrl(process.env.EXPO_PUBLIC_API_URL);

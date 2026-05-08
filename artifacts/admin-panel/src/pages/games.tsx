@@ -45,6 +45,15 @@ async function savePreset(data: { presetColor: string; presetNumber: number }, t
   return res.json();
 }
 
+async function openGame(token: string) {
+  const res = await fetch(`${API_BASE}/api/admin/games/open`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to open game");
+  return res.json() as Promise<{ id: number; scheduledAt: string; status: string }>;
+}
+
 export default function Games() {
   const [page, setPage] = useState(1);
   const [declareOpen, setDeclareOpen] = useState(false);
@@ -87,6 +96,17 @@ export default function Games() {
       queryClient.invalidateQueries({ queryKey: ["preset-result"] });
     },
     onError: () => toast({ title: "Failed to save preset", variant: "destructive" }),
+  });
+
+  const openGameMutation = useMutation({
+    mutationFn: () => openGame(token),
+    onSuccess: (data) => {
+      toast({ title: "Game opened!", description: `Game #${data.id} is now LIVE — users can place bets` });
+      queryClient.invalidateQueries({ queryKey: getGetAdminGamesQueryKey({ page, limit: 20 }) });
+      queryClient.invalidateQueries({ queryKey: ["preset-result"] });
+      setSelectedGameId(data.id);
+    },
+    onError: () => toast({ title: "Failed to open game", variant: "destructive" }),
   });
 
   const declareMutation = useDeclareResult();
@@ -155,6 +175,15 @@ export default function Games() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Games & Live Monitoring</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+            onClick={() => openGameMutation.mutate()}
+            disabled={openGameMutation.isPending}
+          >
+            {openGameMutation.isPending ? "Opening..." : "Open Game"}
+          </Button>
         <Dialog open={declareOpen} onOpenChange={setDeclareOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary" onClick={handleOpenDeclare}>Declare Result</Button>
@@ -228,6 +257,7 @@ export default function Games() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Next Result Controller */}
