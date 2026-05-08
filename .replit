@@ -65,7 +65,7 @@ args = "cd artifacts/mobile && EXPO_PACKAGER_PROXY_URL=https://$REPLIT_EXPO_DEV_
 waitForPort = 20130
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]

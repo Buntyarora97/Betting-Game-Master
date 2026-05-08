@@ -334,6 +334,48 @@ router.get("/admin/games/live-bets", authenticateAdmin, async (req, res): Promis
   });
 });
 
+// GET /admin/games/preset-result
+router.get("/admin/games/preset-result", authenticateAdmin, async (_req, res): Promise<void> => {
+  const settings = await db.select().from(gameSettingsTable).where(
+    sql`${gameSettingsTable.key} IN ('preset_color', 'preset_number')`
+  );
+  const preset: Record<string, string> = {};
+  for (const s of settings) preset[s.key] = s.value;
+
+  const [currentGame] = await db
+    .select()
+    .from(gamesTable)
+    .where(eq(gamesTable.status, "upcoming"))
+    .orderBy(desc(gamesTable.scheduledAt))
+    .limit(1);
+
+  res.json({
+    presetColor: preset.preset_color || null,
+    presetNumber: preset.preset_number !== undefined ? parseInt(preset.preset_number, 10) : null,
+    currentGameId: currentGame?.id || null,
+  });
+});
+
+// POST /admin/games/preset-result
+router.post("/admin/games/preset-result", authenticateAdmin, async (req, res): Promise<void> => {
+  const adminId = (req as any).admin.id;
+  const { presetColor, presetNumber } = req.body;
+
+  if (presetColor) {
+    await db.insert(gameSettingsTable)
+      .values({ key: "preset_color", value: presetColor })
+      .onConflictDoUpdate({ target: gameSettingsTable.key, set: { value: presetColor, updatedAt: new Date() } });
+  }
+  if (presetNumber !== undefined && presetNumber !== null) {
+    await db.insert(gameSettingsTable)
+      .values({ key: "preset_number", value: String(presetNumber) })
+      .onConflictDoUpdate({ target: gameSettingsTable.key, set: { value: String(presetNumber), updatedAt: new Date() } });
+  }
+
+  await logAudit(adminId, "preset_result", `Preset: ${presetColor} #${presetNumber}`, undefined);
+  res.json({ message: "Preset saved", success: true });
+});
+
 // POST /admin/games/declare-result
 router.post("/admin/games/declare-result", authenticateAdmin, async (req, res): Promise<void> => {
   const adminId = (req as any).admin.id;
