@@ -29,3 +29,15 @@ id = "Lix3zxpZK-AJadk47OFCT"
 uri = "file://3batti-admin-panel-FINAL.tar.gz"
 type = "unspecified"
 title = "3 Batti Admin Panel — FINAL (Render API Fixed)"
+
+[[outputs]]
+id = "gq4gHQbmZOIJPt22FfuhB"
+uri = "file://hostinger-dist.tar.gz"
+type = "unspecified"
+title = "Hostinger Admin Panel Files"
+
+[[outputs]]
+id = "4iveLw_nRqWR-6U9OAK0M"
+uri = "file://render.yaml"
+type = "unspecified"
+title = "Render Deployment Config"

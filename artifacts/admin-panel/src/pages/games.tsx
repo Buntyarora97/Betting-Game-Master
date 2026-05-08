@@ -25,8 +25,10 @@ const COLOR_BG: Record<string, string> = {
   green: "#2E7D3222",
 };
 
+const API_BASE = (import.meta.env.VITE_API_URL as string) || "";
+
 async function fetchPreset() {
-  const res = await fetch("/api/admin/games/preset-result", {
+  const res = await fetch(`${API_BASE}/api/admin/games/preset-result`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("admin_token")}` },
   });
   if (!res.ok) throw new Error("Failed to fetch preset");
@@ -34,7 +36,7 @@ async function fetchPreset() {
 }
 
 async function savePreset(data: { presetColor: string; presetNumber: number }, token: string) {
-  const res = await fetch("/api/admin/games/preset-result", {
+  const res = await fetch(`${API_BASE}/api/admin/games/preset-result`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
